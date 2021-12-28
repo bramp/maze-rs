@@ -1,13 +1,14 @@
 extern crate serde_json;
 
-use serde_json::Map;
 use serde_json::json;
+use serde_json::Map;
 
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
 
 pub fn format<T>(grid: &Grid<T>) -> String
-    where T: Cell + Clone
+where
+    T: Cell + Clone,
 {
     let mut map: Map<String, serde_json::Value> = Map::new();
     let mut links: Vec<serde_json::value::Value> = Vec::new();
@@ -40,9 +41,7 @@ pub fn format<T>(grid: &Grid<T>) -> String
     match serde_json::to_string(&map) {
         Ok(json) => {
             return json;
-        },
-        Err(_) => {
-            return String::new()
         }
+        Err(_) => return String::new(),
     }
 }

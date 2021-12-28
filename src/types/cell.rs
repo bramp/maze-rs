@@ -10,17 +10,14 @@ pub trait Cell {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct BaseCell {
     x: usize,
-    y: usize
+    y: usize,
 }
 
 const EMPTY_CELL: &'static str = "   ";
 
 impl Cell for BaseCell {
     fn new(x: usize, y: usize) -> BaseCell {
-        BaseCell {
-            x: x,
-            y: y
-        }
+        BaseCell { x: x, y: y }
     }
 
     fn to_string(&self) -> String {

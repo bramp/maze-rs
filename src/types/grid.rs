@@ -3,43 +3,46 @@ extern crate rand;
 use rand::distributions::{Distribution, Uniform};
 use std::collections::BTreeSet;
 use std::collections::HashMap;
+use std::fmt;
 use std::ops::{Index, IndexMut};
+use std::string::ToString;
 
-use super::cell::Cell;
 use super::super::generator;
 use super::super::output;
+use super::cell::Cell;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Grid<T>
-    where T: Cell + Clone
+where
+    T: Cell + Clone,
 {
     x: usize,
     y: usize,
     pub cells: Vec<Vec<T>>,
-    pub links: HashMap<(usize, usize), BTreeSet<(usize, usize)>>
+    pub links: HashMap<(usize, usize), BTreeSet<(usize, usize)>>,
 }
 
-impl <T> Grid<T>
-    where T: Cell + Clone
+impl<T> Grid<T>
+where
+    T: Cell + Clone,
 {
     pub fn new(x: usize, y: usize) -> Grid<T> {
         let mut grid = Grid {
             x,
             y,
             cells: Vec::with_capacity(x),
-            links: HashMap::new()
+            links: HashMap::new(),
         };
 
         for i in 0..x {
             let mut row = Vec::with_capacity(y);
             for j in 0..y {
                 row.push(T::new(i, j));
-
             }
             grid.cells.push(row);
         }
 
-        return grid;
+        grid
     }
 
     pub fn print_ascii(&self) {
@@ -68,17 +71,8 @@ impl <T> Grid<T>
 
     pub fn is_linked_indices(&self, x1: usize, y1: usize, x2: usize, y2: usize) -> bool {
         match self.links.get(&(x1, y1)) {
-            Some(set) => {
-                match set.get(&(x2, y2)) {
-                    Some(_) => {
-                        true
-                    },
-                    _ => {
-                        false
-                    }
-                }
-            },
-            None => false
+            Some(set) => matches!(set.get(&(x2, y2)), Some(_)),
+            None => false,
         }
     }
 
@@ -99,7 +93,7 @@ impl <T> Grid<T>
         match self.links.contains_key(&(x1, y1)) {
             true => {
                 self.links.get_mut(&(x1, y1)).unwrap().insert((x2, y2));
-            },
+            }
             false => {
                 let mut set: BTreeSet<(usize, usize)> = BTreeSet::new();
                 set.insert((x2, y2));
@@ -131,7 +125,7 @@ impl <T> Grid<T>
             res.push(self.cells[x][y + 1].clone());
         }
 
-        return res;
+        res
     }
 
     pub fn neighbors_linked(&self, cell: &T) -> Vec<T> {
@@ -153,11 +147,11 @@ impl <T> Grid<T>
             res.push(self.cells[x][y - 1].clone());
         }
 
-        if y < self.y - 1 && self.is_linked_indices(x, y, x, y + 1){
+        if y < self.y - 1 && self.is_linked_indices(x, y, x, y + 1) {
             res.push(self.cells[x][y + 1].clone());
         }
 
-        return res;
+        res
     }
 
     pub fn random_cell(&self) -> T {
@@ -179,16 +173,40 @@ impl <T> Grid<T>
         output::json::format(self)
     }
 
-    pub fn to_png(&self, cell_size: u32, wall_size: u32, color_cell: &[u8; 3], color_wall: &[u8; 3], output_filename: &'static str) {
-        output::png::format(self, cell_size, wall_size, color_cell, color_wall, output_filename)
+    pub fn to_png(
+        &self,
+        cell_size: u32,
+        wall_size: u32,
+        color_cell: &[u8; 3],
+        color_wall: &[u8; 3],
+        output_filename: &'static str,
+    ) {
+        output::png::format(
+            self,
+            cell_size,
+            wall_size,
+            color_cell,
+            color_wall,
+            output_filename,
+        )
     }
 
-    pub fn to_svg(&self, cell_size: u32, wall_size: u32, color_cell: &[u8; 3], color_wall: &[u8; 3], output_filename: &'static str) {
-        output::svg::format(self, cell_size, wall_size, color_cell, color_wall, output_filename)
-    }
-
-    pub fn to_string(&self) -> String {
-        output::ascii::format(self)
+    pub fn to_svg(
+        &self,
+        cell_size: u32,
+        wall_size: u32,
+        color_cell: &[u8; 3],
+        color_wall: &[u8; 3],
+        output_filename: &'static str,
+    ) {
+        output::svg::format(
+            self,
+            cell_size,
+            wall_size,
+            color_cell,
+            color_wall,
+            output_filename,
+        )
     }
 
     pub fn unlink(&mut self, cell1: &T, cell2: &T) {
@@ -201,25 +219,18 @@ impl <T> Grid<T>
     }
 
     pub fn unlink_pair(&mut self, x1: usize, y1: usize, x2: usize, y2: usize) {
-        let mut remove = false;
-        match self.links.contains_key(&(x1, y1)) {
-            true => {
-                let set = self.links.get_mut(&(x1, y1)).unwrap();
-                set.remove(&(x2, y2));
-                if set.is_empty() {
-                    remove = true;
-                }
-            },
-            _ => {}
-        }
-
-        if remove {
-            self.links.remove(&(x1, y1));
+        if self.links.contains_key(&(x1, y1)) {
+            let set = self.links.get_mut(&(x1, y1)).unwrap();
+            set.remove(&(x2, y2));
+            if set.is_empty() {
+                self.links.remove(&(x1, y1));
+            }
         }
     }
 
     pub fn visit<F>(&mut self, mut f: F)
-        where F: FnMut(&mut Grid<T>, &T)
+    where
+        F: FnMut(&mut Grid<T>, &T),
     {
         let grid = self;
         for x in 0..grid.x {
@@ -239,21 +250,31 @@ impl <T> Grid<T>
     }
 }
 
-impl <T> Index<usize> for Grid<T>
-    where T: Cell + Clone
+impl<T> fmt::Display for Grid<T>
+where
+    T: Cell + Clone,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        output::ascii::format(self).fmt(f)
+    }
+}
+
+impl<T> Index<usize> for Grid<T>
+where
+    T: Cell + Clone,
 {
     type Output = Vec<T>;
 
-    fn index<'a>(&'a self, index: usize) -> &'a Vec<T> {
+    fn index(&self, index: usize) -> &Vec<T> {
         &self.cells[index]
     }
 }
 
-impl <T> IndexMut<usize> for Grid<T>
-    where T: Cell + Clone + Copy
+impl<T> IndexMut<usize> for Grid<T>
+where
+    T: Cell + Clone + Copy,
 {
-    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Vec<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Vec<T> {
         &mut self.cells[index]
     }
 }
-

@@ -1,11 +1,12 @@
 extern crate rand;
 
-use rand::seq::SliceRandom;
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
+use rand::seq::SliceRandom;
 
 pub fn generate<T>(grid: &mut Grid<T>)
-    where T: Cell + Clone
+where
+    T: Cell + Clone,
 {
     grid.visit(|grid, cell| {
         let mut cells: Vec<T> = Vec::new();
@@ -18,7 +19,7 @@ pub fn generate<T>(grid: &mut Grid<T>)
             cells.push(grid[cell.x()][cell.y() + 1].clone());
         }
 
-        if cells.len() > 0 {
+        if !cells.is_empty() {
             grid.link(cell, cells.choose(&mut rand::thread_rng()).unwrap());
         }
     });

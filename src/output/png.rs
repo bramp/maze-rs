@@ -2,8 +2,8 @@ extern crate image;
 extern crate imageproc;
 
 use image::{Rgb, RgbImage};
-use imageproc::rect::Rect;
 use imageproc::drawing::draw_filled_rect_mut;
+use imageproc::rect::Rect;
 
 // use rand;
 // use rand::distributions::{Sample, Range};
@@ -11,25 +11,47 @@ use imageproc::drawing::draw_filled_rect_mut;
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
 
-pub fn format<T>(grid: &Grid<T>, cell_size: u32, wall_size: u32, color_cell: &[u8; 3], color_wall: &[u8; 3], output_filename: &'static str)
-    where T: Cell + Clone
+pub fn format<T>(
+    grid: &Grid<T>,
+    cell_size: u32,
+    wall_size: u32,
+    color_cell: &[u8; 3],
+    color_wall: &[u8; 3],
+    output_filename: &'static str,
+) where
+    T: Cell + Clone,
 {
     let img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
     let img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
 
-    info!("Generating {:?}, size: {}x{} px", output_filename, img_x, img_y);
+    info!(
+        "Generating {:?}, size: {}x{} px",
+        output_filename, img_x, img_y
+    );
     let mut img = RgbImage::new(img_x, img_y);
 
     let background_color = Rgb(*color_cell);
     let wall_color = Rgb(*color_wall);
 
-    draw_filled_rect_mut(&mut img, Rect::at(0, 0).of_size(img_x, img_y), background_color);
+    draw_filled_rect_mut(
+        &mut img,
+        Rect::at(0, 0).of_size(img_x, img_y),
+        background_color,
+    );
 
     // Top
-    draw_filled_rect_mut(&mut img, Rect::at(0, 0).of_size(img_x, wall_size), wall_color);
+    draw_filled_rect_mut(
+        &mut img,
+        Rect::at(0, 0).of_size(img_x, wall_size),
+        wall_color,
+    );
 
     // Left
-    draw_filled_rect_mut(&mut img, Rect::at(0, 0).of_size(wall_size, (img_y - wall_size) as u32), wall_color);
+    draw_filled_rect_mut(
+        &mut img,
+        Rect::at(0, 0).of_size(wall_size, (img_y - wall_size) as u32),
+        wall_color,
+    );
 
     // let mut between = Range::new(0, 255);
     // let mut rng = rand::thread_rng();
@@ -59,8 +81,15 @@ pub fn format<T>(grid: &Grid<T>, cell_size: u32, wall_size: u32, color_cell: &[u
                 let start_y = y as i32 * cell_size as i32 + y as i32 * wall_size as i32;
                 let size_x = wall_size;
                 let size_y = (cell_size + 2 * wall_size) as u32;
-                debug!("right: ({}, {}), start: ({}, {}), size({}, {})", x, y, start_x, start_y, size_x, size_y);
-                draw_filled_rect_mut(&mut img, Rect::at(start_x, start_y).of_size(size_x, size_y), wall_color);
+                debug!(
+                    "right: ({}, {}), start: ({}, {}), size({}, {})",
+                    x, y, start_x, start_y, size_x, size_y
+                );
+                draw_filled_rect_mut(
+                    &mut img,
+                    Rect::at(start_x, start_y).of_size(size_x, size_y),
+                    wall_color,
+                );
             }
 
             // Bottom - Horizontal
@@ -70,8 +99,15 @@ pub fn format<T>(grid: &Grid<T>, cell_size: u32, wall_size: u32, color_cell: &[u
                 let start_y = (y + 1) as i32 * cell_size as i32 + (y + 1) as i32 * wall_size as i32;
                 let size_x = (cell_size + 2 * wall_size) as u32;
                 let size_y = wall_size;
-                debug!("bottom: ({}, {}), start: ({}, {}), size({}, {})", x, y, start_x, start_y, size_x, size_y);
-                draw_filled_rect_mut(&mut img, Rect::at(start_x, start_y).of_size(size_x, size_y), wall_color);
+                debug!(
+                    "bottom: ({}, {}), start: ({}, {}), size({}, {})",
+                    x, y, start_x, start_y, size_x, size_y
+                );
+                draw_filled_rect_mut(
+                    &mut img,
+                    Rect::at(start_x, start_y).of_size(size_x, size_y),
+                    wall_color,
+                );
             }
         }
     }

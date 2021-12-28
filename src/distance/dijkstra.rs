@@ -1,4 +1,4 @@
-use ansi_term::Colour::{Green, Black};
+use ansi_term::Colour::{Black, Green};
 use ansi_term::Style;
 
 use super::super::types::cell::Cell;
@@ -7,13 +7,10 @@ use super::super::types::grid::Grid;
 const EMPTY_CELL: &'static str = "   ";
 
 static ASCII_LOWER: [char; 62] = [
-'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
-'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-'Y', 'Z'
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+    'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B',
+    'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+    'V', 'W', 'X', 'Y', 'Z',
 ];
 
 #[derive(Debug, Clone, Copy)]
@@ -40,13 +37,17 @@ impl Cell for DistanceCell {
         match self.distance {
             Some(d) => {
                 if self.is_path {
-                    Style::new().on(Green).fg(Black).paint(format!(" {} ", ASCII_LOWER[d % 62])).to_string()
+                    Style::new()
+                        .on(Green)
+                        .fg(Black)
+                        .paint(format!(" {} ", ASCII_LOWER[d % 62]))
+                        .to_string()
                     // Green.paint(format!(" {} ", ASCII_LOWER[d % 62])).to_string()
                 } else {
                     EMPTY_CELL.to_string()
                 }
-            },
-            _ => EMPTY_CELL.to_string()
+            }
+            _ => EMPTY_CELL.to_string(),
         }
     }
 
@@ -65,8 +66,13 @@ impl DistanceCell {
     }
 }
 
-pub fn calculate<T>(grid: &Grid<T>, begin: (usize, usize), end: (usize, usize)) -> Grid<DistanceCell>
-    where T: Cell + Clone + Copy
+pub fn calculate<T>(
+    grid: &Grid<T>,
+    begin: (usize, usize),
+    end: (usize, usize),
+) -> Grid<DistanceCell>
+where
+    T: Cell + Clone + Copy,
 {
     let mut distance_grid: Grid<DistanceCell> = Grid::new(grid.x(), grid.y());
 
@@ -86,7 +92,7 @@ pub fn calculate<T>(grid: &Grid<T>, begin: (usize, usize), end: (usize, usize)) 
             // Traverse linked neighbors and find closest one
             for neighbor in grid.neighbors_linked_indices(f.x(), f.y()) {
                 match distance_grid[neighbor.x()][neighbor.y()].distance() {
-                    Some(_d) => {},
+                    Some(_d) => {}
                     _ => {
                         distance_grid[neighbor.x()][neighbor.y()].distance = Some(f_distance + 1);
                         new_frontier.push(distance_grid[neighbor.x()][neighbor.y()]);
@@ -122,14 +128,13 @@ pub fn calculate<T>(grid: &Grid<T>, begin: (usize, usize), end: (usize, usize)) 
         current = new;
     }
 
-
     return distance_grid;
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::types::cell::*;
     use super::super::super::distance;
+    use super::super::super::types::cell::*;
     use super::super::super::types::grid::Grid;
     use test::Bencher;
 

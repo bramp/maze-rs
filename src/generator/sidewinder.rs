@@ -2,12 +2,13 @@ extern crate rand;
 
 use rand::Rng;
 
-use rand::seq::SliceRandom;
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
+use rand::seq::SliceRandom;
 
 pub fn generate<T>(grid: &mut Grid<T>)
-    where T: Cell + Clone
+where
+    T: Cell + Clone,
 {
     for y in 0..grid.y() {
         let mut cells: Vec<T> = Vec::new();
@@ -17,7 +18,8 @@ pub fn generate<T>(grid: &mut Grid<T>)
             let at_eastern_boundary = x == grid.x() - 1;
             let at_northern_boundary = y == grid.y() - 1;
 
-            let should_close_out = at_eastern_boundary || (!at_northern_boundary && rand::thread_rng().gen());
+            let should_close_out =
+                at_eastern_boundary || (!at_northern_boundary && rand::thread_rng().gen());
 
             let mut should_clear = false;
             if should_close_out {

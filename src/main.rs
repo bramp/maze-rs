@@ -36,7 +36,7 @@ enum Algorithm {
     AldousBroder,
     Binary,
     Sidewinder,
-    Wilson
+    Wilson,
 }
 
 impl FromStr for Algorithm {
@@ -48,7 +48,7 @@ impl FromStr for Algorithm {
             "binary" => Ok(Algorithm::Binary),
             "sidewinder" => Ok(Algorithm::Sidewinder),
             "wilson" => Ok(Algorithm::Wilson),
-            _ => Err("no match")
+            _ => Err("no match"),
         }
     }
 }
@@ -57,7 +57,7 @@ enum Format {
     Ascii,
     Json,
     Png,
-    Svg
+    Svg,
 }
 
 impl FromStr for Format {
@@ -69,7 +69,7 @@ impl FromStr for Format {
             "json" => Ok(Format::Json),
             "png" => Ok(Format::Png),
             "svg" => Ok(Format::Svg),
-            _ => Err("no match")
+            _ => Err("no match"),
         }
     }
 }
@@ -84,75 +84,87 @@ fn main() {
     let matches = App::new(DESCRIPTION)
         .version(VERSION)
         .author(AUTHOR)
-        .arg(Arg::with_name("algorithm")
-            .help("Algorithm to use")
-            .short("a")
-            .long("algorithm")
-            .possible_values(&["aldous-broder", "binary", "sidewinder", "wilson"])
-            .default_value("aldous-broder")
+        .arg(
+            Arg::with_name("algorithm")
+                .help("Algorithm to use")
+                .short("a")
+                .long("algorithm")
+                .possible_values(&["aldous-broder", "binary", "sidewinder", "wilson"])
+                .default_value("aldous-broder"),
         )
-        .arg(Arg::with_name("cell-size")
-            .help("Size of Cell")
-            .short("c")
-            .long("cell-size")
-            .default_value(default_cell_size)
+        .arg(
+            Arg::with_name("cell-size")
+                .help("Size of Cell")
+                .short("c")
+                .long("cell-size")
+                .default_value(default_cell_size),
         )
-        .arg(Arg::with_name("color-cell")
-            .help("Color of Cell")
-            .long("color-cell")
-            .default_value("#fff")
+        .arg(
+            Arg::with_name("color-cell")
+                .help("Color of Cell")
+                .long("color-cell")
+                .default_value("#fff"),
         )
-        .arg(Arg::with_name("color-wall")
-            .help("Color of Wall")
-            .long("color-wall")
-            .default_value("#000")
+        .arg(
+            Arg::with_name("color-wall")
+                .help("Color of Wall")
+                .long("color-wall")
+                .default_value("#000"),
         )
-        .arg(Arg::with_name("wall-size")
-            .help("Size of Wall")
-            .short("w")
-            .long("wall-size")
-            .default_value(default_wall_size)
+        .arg(
+            Arg::with_name("wall-size")
+                .help("Size of Wall")
+                .short("w")
+                .long("wall-size")
+                .default_value(default_wall_size),
         )
-        .arg(Arg::with_name("format")
-            .help("Output format to use")
-            .short("f")
-            .long("format")
-            .possible_values(&["ascii", "json", "png", "svg"])
-            .default_value("ascii")
+        .arg(
+            Arg::with_name("format")
+                .help("Output format to use")
+                .short("f")
+                .long("format")
+                .possible_values(&["ascii", "json", "png", "svg"])
+                .default_value("ascii"),
         )
-        .arg(Arg::with_name("height")
-            .help("Height of Maze")
-            .short("y")
-            .long("height")
-            .default_value(default_height)
+        .arg(
+            Arg::with_name("height")
+                .help("Height of Maze")
+                .short("y")
+                .long("height")
+                .default_value(default_height),
         )
-        .arg(Arg::with_name("width")
-            .help("Width of Maze")
-            .short("x")
-            .long("width")
-            .default_value(default_width)
+        .arg(
+            Arg::with_name("width")
+                .help("Width of Maze")
+                .short("x")
+                .long("width")
+                .default_value(default_width),
         )
-        .arg(Arg::with_name("verbose")
-            .help("Verbose mode")
-            .short("v")
-            .long("verbose")
-            .multiple(true)
+        .arg(
+            Arg::with_name("verbose")
+                .help("Verbose mode")
+                .short("v")
+                .long("verbose")
+                .multiple(true),
         )
-        .arg(Arg::with_name("rest")
-            .help("Run REST Server")
-            .short("r")
-            .long("rest")
+        .arg(
+            Arg::with_name("rest")
+                .help("Run REST Server")
+                .short("r")
+                .long("rest"),
         )
-        .arg(Arg::with_name("solution")
-            .help("Show solution")
-            .short("s")
-            .long("solution")
+        .arg(
+            Arg::with_name("solution")
+                .help("Show solution")
+                .short("s")
+                .long("solution"),
         )
-        .arg(Arg::with_name("rest-port")
-            .help("REST Port")
-            .short("p")
-            .long("rest-port")
-            .default_value(default_port)
+        .arg(
+            Arg::with_name("rest-port")
+                .help("REST Port")
+                .short("p")
+                .long("rest-port")
+                .default_value(default_port),
         )
         .get_matches();
 
@@ -165,9 +177,14 @@ fn main() {
 
     env_logger::init();
 
-    let port: u16 = match matches.value_of("rest-port").unwrap().to_string().parse::<u16>() {
+    let port: u16 = match matches
+        .value_of("rest-port")
+        .unwrap()
+        .to_string()
+        .parse::<u16>()
+    {
         Ok(val) => val,
-        _ => DEFAULT_PORT
+        _ => DEFAULT_PORT,
     };
 
     if matches.is_present("rest") {
@@ -175,34 +192,54 @@ fn main() {
         exit(0);
     }
 
-    let height = match matches.value_of("height").unwrap().to_string().parse::<usize>() {
+    let height = match matches
+        .value_of("height")
+        .unwrap()
+        .to_string()
+        .parse::<usize>()
+    {
         Ok(val) => val,
-        _ => DEFAULT_HEIGHT
+        _ => DEFAULT_HEIGHT,
     };
 
-    let width = match matches.value_of("width").unwrap().to_string().parse::<usize>() {
+    let width = match matches
+        .value_of("width")
+        .unwrap()
+        .to_string()
+        .parse::<usize>()
+    {
         Ok(val) => val,
-        _ => DEFAULT_WIDTH
+        _ => DEFAULT_WIDTH,
     };
 
-    let cell_size = match matches.value_of("cell-size").unwrap().to_string().parse::<u32>() {
+    let cell_size = match matches
+        .value_of("cell-size")
+        .unwrap()
+        .to_string()
+        .parse::<u32>()
+    {
         Ok(val) => val,
-        _ => DEFAULT_CELL_SIZE
+        _ => DEFAULT_CELL_SIZE,
     };
 
-    let wall_size = match matches.value_of("wall-size").unwrap().to_string().parse::<u32>() {
+    let wall_size = match matches
+        .value_of("wall-size")
+        .unwrap()
+        .to_string()
+        .parse::<u32>()
+    {
         Ok(val) => val,
-        _ => DEFAULT_WALL_SIZE
+        _ => DEFAULT_WALL_SIZE,
     };
 
     let color_cell = match matches.value_of("color-cell").unwrap().parse::<CssColor>() {
         Ok(val) => [val.r, val.g, val.b],
-        _ => DEFAULT_COLOR_CELL
+        _ => DEFAULT_COLOR_CELL,
     };
 
     let color_wall = match matches.value_of("color-wall").unwrap().parse::<CssColor>() {
         Ok(val) => [val.r, val.g, val.b],
-        _ => DEFAULT_COLOR_WALL
+        _ => DEFAULT_COLOR_WALL,
     };
 
     let algorithm = Algorithm::from_str(matches.value_of("algorithm").unwrap());
@@ -212,19 +249,19 @@ fn main() {
         Ok(Algorithm::AldousBroder) => {
             info!("Generating maze using Aldous-Broder algorithm");
             grid.generate_aldous_broder()
-        },
+        }
         Ok(Algorithm::Binary) => {
             info!("Generating maze using Binary algorithm");
             grid.generate_binary()
-        },
+        }
         Ok(Algorithm::Sidewinder) => {
             info!("Generating maze using Sidewinder algorithm");
             grid.generate_sidewinder()
-        },
+        }
         Ok(Algorithm::Wilson) => {
             info!("Generating maze using Wilson's algorithm");
             grid.generate_wilson()
-        },
+        }
         Err(_) => {
             info!("Invalid algorithm specified");
             exit(1);
@@ -238,13 +275,26 @@ fn main() {
         Ok(Format::Png) => {
             let output_filename = "output.png";
             info!("Writing maze to {:?}", output_filename);
-            grid.to_png(cell_size, wall_size, &color_cell, &color_wall, output_filename);
-        },
+            grid.to_png(
+                cell_size,
+                wall_size,
+                &color_cell,
+                &color_wall,
+                output_filename,
+            );
+        }
         Ok(Format::Svg) => {
             let output_filename = "output.svg";
             info!("Writing maze to {:?}", output_filename);
-            grid.to_svg(cell_size, wall_size, &color_cell, &color_wall, output_filename);
-        },
+            grid.to_svg(
+                cell_size,
+                wall_size,
+                &color_cell,
+                &color_wall,
+                output_filename,
+            );
+            grid.to_png(cell_size, wall_size, &color_cell, &color_wall, "output.png");
+        }
         Err(_) => {
             println!("Invalid format specified");
             exit(1);
@@ -252,16 +302,20 @@ fn main() {
     }
 
     match matches.occurrences_of("solution") {
-        0 => {},
+        0 => {}
         _ => {
             println!("Solution");
-            let distances = distance::dijkstra::calculate(&grid, (0, 0), (grid.x() -1 , grid.y() - 1));
+            let distances =
+                distance::dijkstra::calculate(&grid, (0, 0), (grid.x() - 1, grid.y() - 1));
             distances.print_ascii();
-            let len = distances[distances.x() - 1][distances.y() - 1].distance().unwrap();
+            let len = distances[distances.x() - 1][distances.y() - 1]
+                .distance()
+                .unwrap();
             info!("Shortest path is {} steps long.", len);
 
             println!("Solution (Reversed)");
-            let distances = distance::dijkstra::calculate(&grid, (grid.x() -1 , grid.y() - 1), (0, 0));
+            let distances =
+                distance::dijkstra::calculate(&grid, (grid.x() - 1, grid.y() - 1), (0, 0));
             distances.print_ascii();
             info!("Shortest path is {} steps long.", len);
 

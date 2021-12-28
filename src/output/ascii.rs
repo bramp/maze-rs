@@ -4,7 +4,8 @@ use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
 
 pub fn format<T>(grid: &Grid<T>) -> String
-    where T: Cell + Clone
+where
+    T: Cell + Clone,
 {
     let mut res = String::new();
     res += "+";
@@ -20,7 +21,7 @@ pub fn format<T>(grid: &Grid<T>) -> String
 
             match grid.is_linked_indices(x, y, x + 1, y) {
                 true => top += " ",
-                false => top += "|"
+                false => top += "|",
             }
 
             match grid.is_linked_indices(x, y, x, y + 1) {

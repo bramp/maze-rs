@@ -1,11 +1,12 @@
 extern crate rand;
 
-use rand::seq::SliceRandom;
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
+use rand::seq::SliceRandom;
 
 pub fn generate<T>(grid: &mut Grid<T>)
-    where T: Cell + Clone
+where
+    T: Cell + Clone,
 {
     let mut cell = grid.random_cell();
     let mut unvisited = grid.size() - 1;
@@ -15,7 +16,7 @@ pub fn generate<T>(grid: &mut Grid<T>)
         let neighbor = neighbors.choose(&mut rand::thread_rng()).unwrap();
 
         if !grid.links.contains_key(&(neighbor.x(), neighbor.y())) {
-            grid.link(&cell, &neighbor);
+            grid.link(&cell, neighbor);
             unvisited -= 1;
         }
 
