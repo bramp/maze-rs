@@ -71,7 +71,7 @@ pub(crate) fn draw_maze<T, P: Pixel, Container>(
             let cell = &grid[x][y];
 
             // Right - Vertical
-            let right = grid.is_linked_indices(cell.x(), cell.y(), cell.x() + 1, cell.y());
+            let right = grid.is_linked_indices(cell.x(), cell.y(), (cell.x() + 1).rem_euclid(grid.x()), cell.y());
             if !right {
                 let start_x = (x + 1) as i32 * cell_size as i32 + (x + 1) as i32 * wall_size as i32;
                 let start_y = y as i32 * cell_size as i32 + y as i32 * wall_size as i32;
@@ -89,7 +89,7 @@ pub(crate) fn draw_maze<T, P: Pixel, Container>(
             }
 
             // Bottom - Horizontal
-            let bottom = grid.is_linked_indices(cell.x(), cell.y(), cell.x(), cell.y() + 1)
+            let bottom = grid.is_linked_indices(cell.x(), cell.y(), cell.x(), (cell.y() + 1).rem_euclid(grid.y()))
                 || (external_doors && grid.end == Xy::new(x, y));
             if !bottom {
                 let start_x = x as i32 * cell_size as i32 + x as i32 * wall_size as i32;

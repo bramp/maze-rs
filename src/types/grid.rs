@@ -169,7 +169,7 @@ where
         }
 
         let wrapped_x = (x + 1).rem_euclid(self.x);
-        if self.is_linked_indices(x, y, x + 1, y) {
+        if self.is_linked_indices(x, y, wrapped_x, y) {
             res.push(self.cells[wrapped_x][y].clone());
         }
 

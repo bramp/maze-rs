@@ -303,12 +303,6 @@ fn main() {
     grid.wrap_h = matches.is_present("wrap-h");
     grid.wrap_v = matches.is_present("wrap-v");
 
-    // Add links to the outside world
-    if external_doors {
-//        grid.link_indices(grid.start.x, grid.start.y, grid.start.x, -1);
-        grid.link_indices(grid.end.x, grid.end.y, grid.end.x, grid.end.y + 1);
-    }
-
     match algorithm {
         Ok(Algorithm::AldousBroder) => {
             info!("Generating maze using Aldous-Broder algorithm");
