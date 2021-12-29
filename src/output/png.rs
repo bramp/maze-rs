@@ -35,35 +35,44 @@ pub(crate) fn draw_maze<T, P: Pixel, Container>(
     // Background
     draw_filled_rect_mut(img, Rect::at(0, 0).of_size(img_x, img_y), background_color);
 
-    // Top
-    if external_doors && grid.start.y() == 0 {
-        let door_x = (grid.start.x() as u32) * (cell_size + wall_size);
+    // Left
+    for y in 0..grid.y() {
+        let left = grid.is_linked_indices(0, y, grid.x() - 1, y);
+        if !left {
+            let start_y = y as i32 * cell_size as i32 + y as i32 * wall_size as i32;
+            let size_x = wall_size;
+            let size_y = (cell_size + 2 * wall_size) as u32;
 
-        if grid.start.x() > 0 {
-            // Draw left of the starting door
-            draw_filled_rect_mut(img, Rect::at(0, 0).of_size(door_x, wall_size), wall_color);
-        }
-
-        if grid.start.x() < grid.x() - 1 {
-            // Draw right of the starting door
-            let start_x = door_x + (cell_size + wall_size);
+            debug!(
+                "left: ({}, {}), start: ({}, {}), size({}, {})",
+                0, y, 0, start_y, size_x, size_y
+            );
             draw_filled_rect_mut(
                 img,
-                Rect::at(start_x as i32, 0).of_size(img_x - start_x + wall_size, wall_size),
+                Rect::at(0, start_y).of_size(size_x, size_y),
                 wall_color,
             );
         }
-    } else {
-        // Draw the full length
-        draw_filled_rect_mut(img, Rect::at(0, 0).of_size(img_x, wall_size), wall_color);
     }
 
-    // Left
-    draw_filled_rect_mut(
-        img,
-        Rect::at(0, 0).of_size(wall_size, (img_y - wall_size) as u32),
-        wall_color,
-    );
+    // Top
+    for x in 0..grid.x() {
+        let top = grid.is_linked_indices(x, 0, x, grid.y() - 1) || (external_doors && grid.end == Xy::new(x, 0));
+        if !top {
+            let start_x = x as i32 * cell_size as i32 + x as i32 * wall_size as i32;
+            let size_x = (cell_size + 2 * wall_size) as u32;
+            let size_y = wall_size;
+            debug!(
+                "top: ({}, {}), start: ({}, {}), size({}, {})",
+                x, 0, start_x, 0, size_x, size_y
+            );
+            draw_filled_rect_mut(
+                img,
+                Rect::at(start_x, 0).of_size(size_x, size_y),
+                wall_color,
+            );
+        }
+    }
 
     // Cells
     for x in 0..grid.x() {
