@@ -1,4 +1,4 @@
-// use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 
 pub trait Cell {
     fn new(x: usize, y: usize) -> Self;
@@ -7,17 +7,17 @@ pub trait Cell {
     fn y(&self) -> usize;
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct BaseCell {
     x: usize,
     y: usize,
 }
 
-const EMPTY_CELL: &'static str = "   ";
+const EMPTY_CELL: &str = "   ";
 
 impl Cell for BaseCell {
     fn new(x: usize, y: usize) -> BaseCell {
-        BaseCell { x: x, y: y }
+        BaseCell { x, y }
     }
 
     fn to_string(&self) -> String {

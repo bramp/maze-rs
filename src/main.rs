@@ -14,15 +14,16 @@ use css_color_parser::Color as CssColor;
 use maze::distance;
 use maze::types::cell::BaseCell;
 use maze::types::grid::Grid;
+use maze::types::xy::Xy;
 use maze::web;
 
 use std::env;
 use std::process::exit;
 use std::str::FromStr;
 
-const AUTHOR: &'static str = "Tomas Korcak <korczis@gmail.com>";
-const DESCRIPTION: &'static str = "Maze Generator";
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const AUTHOR: &str = "Tomas Korcak <korczis@gmail.com>";
+const DESCRIPTION: &str = "Maze Generator";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const DEFAULT_CELL_SIZE: u32 = 80;
 const DEFAULT_WALL_SIZE: u32 = 20;
@@ -31,6 +32,7 @@ const DEFAULT_WIDTH: usize = 5;
 const DEFAULT_PORT: u16 = 5000;
 const DEFAULT_COLOR_CELL: [u8; 3] = [255, 255, 255];
 const DEFAULT_COLOR_WALL: [u8; 3] = [0, 0, 0];
+const DEFAULT_START: Xy = Xy { x: 0, y: 0 };
 
 enum Algorithm {
     AldousBroder,
@@ -81,6 +83,9 @@ fn main() {
     let default_width = &DEFAULT_WIDTH.to_string()[..];
     let default_port = &DEFAULT_PORT.to_string()[..];
 
+    let default_start = &DEFAULT_START.to_string();
+    let default_end = "(-1,-1)"; // Special invalid value
+
     let matches = App::new(DESCRIPTION)
         .version(VERSION)
         .author(AUTHOR)
@@ -127,6 +132,11 @@ fn main() {
                 .default_value("ascii"),
         )
         .arg(
+            Arg::with_name("external-doors")
+                .help("Have opening on the outer edge")
+                .long("external-doors"),
+        )
+        .arg(
             Arg::with_name("height")
                 .help("Height of Maze")
                 .short("y")
@@ -139,6 +149,28 @@ fn main() {
                 .short("x")
                 .long("width")
                 .default_value(default_width),
+        )
+        .arg(
+            Arg::with_name("start")
+                .help("Start coordinates of Maze")
+                .long("start")
+                .default_value(default_start),
+        )
+        .arg(
+            Arg::with_name("end")
+                .help("End coordinates of Maze")
+                .long("end")
+                .default_value(default_end),
+        )
+        .arg(
+            Arg::with_name("wrap-h")
+                .help("Allow the maze to wrap  horizontally")
+                .long("wrap-h"),
+        )
+        .arg(
+            Arg::with_name("wrap-v")
+                .help("Allow the maze to wrap  vertically")
+                .long("wrap-v"),
         )
         .arg(
             Arg::with_name("verbose")
@@ -212,6 +244,26 @@ fn main() {
         _ => DEFAULT_WIDTH,
     };
 
+    let start = match matches.value_of("start").unwrap().to_string().parse::<Xy>() {
+        Ok(val) => val,
+        _ => DEFAULT_START,
+    };
+
+    let end = match matches.value_of("end").unwrap().to_string().parse::<Xy>() {
+        Ok(val) => val,
+        _ => Xy::new(width - 1, height - 1),
+    };
+
+    if start.x() >= width || start.y() >= height {
+        println!("Start posititon is outside maze");
+        exit(1);
+    }
+
+    if end.x() >= width || end.y() >= height {
+        println!("End posititon is outside maze");
+        exit(1);
+    }
+
     let cell_size = match matches
         .value_of("cell-size")
         .unwrap()
@@ -242,9 +294,21 @@ fn main() {
         _ => DEFAULT_COLOR_WALL,
     };
 
+    let external_doors = matches.is_present("external-doors");
     let algorithm = Algorithm::from_str(matches.value_of("algorithm").unwrap());
 
     let mut grid: Grid<BaseCell> = Grid::new(width, height);
+    grid.start = start;
+    grid.end = end;
+    grid.wrap_h = matches.is_present("wrap-h");
+    grid.wrap_v = matches.is_present("wrap-v");
+
+    // Add links to the outside world
+    if external_doors {
+//        grid.link_indices(grid.start.x, grid.start.y, grid.start.x, -1);
+        grid.link_indices(grid.end.x, grid.end.y, grid.end.x, grid.end.y + 1);
+    }
+
     match algorithm {
         Ok(Algorithm::AldousBroder) => {
             info!("Generating maze using Aldous-Broder algorithm");
@@ -280,6 +344,7 @@ fn main() {
                 wall_size,
                 &color_cell,
                 &color_wall,
+                external_doors,
                 output_filename,
             );
         }
@@ -291,9 +356,9 @@ fn main() {
                 wall_size,
                 &color_cell,
                 &color_wall,
+                external_doors,
                 output_filename,
             );
-            grid.to_png(cell_size, wall_size, &color_cell, &color_wall, "output.png");
         }
         Err(_) => {
             println!("Invalid format specified");
@@ -305,17 +370,13 @@ fn main() {
         0 => {}
         _ => {
             println!("Solution");
-            let distances =
-                distance::dijkstra::calculate(&grid, (0, 0), (grid.x() - 1, grid.y() - 1));
+            let distances = distance::dijkstra::calculate(&grid, grid.start, grid.end);
             distances.print_ascii();
-            let len = distances[distances.x() - 1][distances.y() - 1]
-                .distance()
-                .unwrap();
+            let len = distances[grid.end.x()][grid.end.y()].distance().unwrap();
             info!("Shortest path is {} steps long.", len);
 
             println!("Solution (Reversed)");
-            let distances =
-                distance::dijkstra::calculate(&grid, (grid.x() - 1, grid.y() - 1), (0, 0));
+            let distances = distance::dijkstra::calculate(&grid, grid.end, grid.start);
             distances.print_ascii();
             info!("Shortest path is {} steps long.", len);
 

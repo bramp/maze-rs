@@ -1,9 +1,6 @@
 #![feature(test)]
 
 #[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
 extern crate log;
 
 extern crate ansi_term;

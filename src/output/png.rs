@@ -1,9 +1,13 @@
 extern crate image;
 extern crate imageproc;
 
+use image::Pixel;
 use image::{Rgb, RgbImage};
 use imageproc::drawing::draw_filled_rect_mut;
 use imageproc::rect::Rect;
+use std::ops::Deref;
+use std::ops::DerefMut;
+use types::xy::Xy;
 
 // use rand;
 // use rand::distributions::{Sample, Range};
@@ -11,68 +15,60 @@ use imageproc::rect::Rect;
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
 
-pub fn format<T>(
+pub(crate) fn draw_maze<T, P: Pixel, Container>(
+    img: &mut image::ImageBuffer<P, Container>,
     grid: &Grid<T>,
     cell_size: u32,
     wall_size: u32,
-    color_cell: &[u8; 3],
-    color_wall: &[u8; 3],
-    output_filename: &'static str,
+    background_color: P,
+    wall_color: P,
+    external_doors: bool,
 ) where
     T: Cell + Clone,
+    P: Pixel + 'static,
+    P::Subpixel: 'static,
+    Container: Deref<Target = [P::Subpixel]> + DerefMut,
 {
-    let img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
-    let img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
+    let img_x = img.width();
+    let img_y = img.height();
 
-    info!(
-        "Generating {:?}, size: {}x{} px",
-        output_filename, img_x, img_y
-    );
-    let mut img = RgbImage::new(img_x, img_y);
-
-    let background_color = Rgb(*color_cell);
-    let wall_color = Rgb(*color_wall);
-
-    draw_filled_rect_mut(
-        &mut img,
-        Rect::at(0, 0).of_size(img_x, img_y),
-        background_color,
-    );
+    // Background
+    draw_filled_rect_mut(img, Rect::at(0, 0).of_size(img_x, img_y), background_color);
 
     // Top
-    draw_filled_rect_mut(
-        &mut img,
-        Rect::at(0, 0).of_size(img_x, wall_size),
-        wall_color,
-    );
+    if external_doors && grid.start.y() == 0 {
+        let door_x = (grid.start.x() as u32) * (cell_size + wall_size);
+
+        if grid.start.x() > 0 {
+            // Draw left of the starting door
+            draw_filled_rect_mut(img, Rect::at(0, 0).of_size(door_x, wall_size), wall_color);
+        }
+
+        if grid.start.x() < grid.x() - 1 {
+            // Draw right of the starting door
+            let start_x = door_x + (cell_size + wall_size);
+            draw_filled_rect_mut(
+                img,
+                Rect::at(start_x as i32, 0).of_size(img_x - start_x + wall_size, wall_size),
+                wall_color,
+            );
+        }
+    } else {
+        // Draw the full length
+        draw_filled_rect_mut(img, Rect::at(0, 0).of_size(img_x, wall_size), wall_color);
+    }
 
     // Left
     draw_filled_rect_mut(
-        &mut img,
+        img,
         Rect::at(0, 0).of_size(wall_size, (img_y - wall_size) as u32),
         wall_color,
     );
-
-    // let mut between = Range::new(0, 255);
-    // let mut rng = rand::thread_rng();
 
     // Cells
     for x in 0..grid.x() {
         for y in 0..grid.y() {
             let cell = &grid[x][y];
-
-            // Cell background
-            /*
-            let cell_color = Rgb([
-                between.sample(&mut rng),
-                between.sample(&mut rng),
-                between.sample(&mut rng)
-            ]);
-
-            let start_x = x as i32 * cell_size as i32 + (x + 1) as i32 * wall_size as i32;
-            let start_y = y as i32 * cell_size as i32 + (y + 1) as i32 * wall_size as i32;
-            draw_filled_rect_mut(&mut img, Rect::at(start_x, start_y).of_size(cell_size + wall_size, cell_size + wall_size), cell_color);
-            */
 
             // Right - Vertical
             let right = grid.is_linked_indices(cell.x(), cell.y(), cell.x() + 1, cell.y());
@@ -86,14 +82,15 @@ pub fn format<T>(
                     x, y, start_x, start_y, size_x, size_y
                 );
                 draw_filled_rect_mut(
-                    &mut img,
+                    img,
                     Rect::at(start_x, start_y).of_size(size_x, size_y),
                     wall_color,
                 );
             }
 
             // Bottom - Horizontal
-            let bottom = grid.is_linked_indices(cell.x(), cell.y(), cell.x(), cell.y() + 1);
+            let bottom = grid.is_linked_indices(cell.x(), cell.y(), cell.x(), cell.y() + 1)
+                || (external_doors && grid.end == Xy::new(x, y));
             if !bottom {
                 let start_x = x as i32 * cell_size as i32 + x as i32 * wall_size as i32;
                 let start_y = (y + 1) as i32 * cell_size as i32 + (y + 1) as i32 * wall_size as i32;
@@ -104,13 +101,46 @@ pub fn format<T>(
                     x, y, start_x, start_y, size_x, size_y
                 );
                 draw_filled_rect_mut(
-                    &mut img,
+                    img,
                     Rect::at(start_x, start_y).of_size(size_x, size_y),
                     wall_color,
                 );
             }
         }
     }
+}
 
+pub fn format<T>(
+    grid: &Grid<T>,
+    cell_size: u32,
+    wall_size: u32,
+    color_cell: &[u8; 3],
+    color_wall: &[u8; 3],
+    external_doors: bool,
+    output_filename: &'static str,
+) where
+    T: Cell + Clone,
+{
+    let img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
+    let img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
+
+    info!(
+        "Generating {:?}, size: {}x{} px",
+        output_filename, img_x, img_y
+    );
+
+    let mut img = RgbImage::new(img_x, img_y);
+    let background_color = Rgb(*color_cell);
+    let wall_color = Rgb(*color_wall);
+
+    draw_maze(
+        &mut img,
+        grid,
+        cell_size,
+        wall_size,
+        background_color,
+        wall_color,
+        external_doors,
+    );
     img.save(output_filename).unwrap();
 }

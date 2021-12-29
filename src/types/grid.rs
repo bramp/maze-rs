@@ -1,11 +1,13 @@
 extern crate rand;
 
 use rand::distributions::{Distribution, Uniform};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::{Index, IndexMut};
 use std::string::ToString;
+use types::xy::Xy;
 
 use super::super::generator;
 use super::super::output;
@@ -16,8 +18,19 @@ pub struct Grid<T>
 where
     T: Cell + Clone,
 {
+    // Width of the maze
     x: usize,
+
+    // Height of the maze
     y: usize,
+
+    pub start: Xy,
+    pub end: Xy,
+
+    // Allow wrapping horizontally (like pacman) or vertically (like asteroids).
+    pub wrap_h: bool,
+    pub wrap_v: bool,
+
     pub cells: Vec<Vec<T>>,
     pub links: HashMap<(usize, usize), BTreeSet<(usize, usize)>>,
 }
@@ -30,6 +43,13 @@ where
         let mut grid = Grid {
             x,
             y,
+
+            start: Xy::new(0, 0),
+            end: Xy::new(x - 1, y - 1),
+
+            wrap_h: false,
+            wrap_v: false,
+
             cells: Vec::with_capacity(x),
             links: HashMap::new(),
         };
@@ -111,18 +131,26 @@ where
 
         if x > 0 {
             res.push(self.cells[x - 1][y].clone());
+        } else if self.wrap_h {
+            res.push(self.cells[self.x - 1][y].clone());
         }
 
         if x < self.x - 1 {
             res.push(self.cells[x + 1][y].clone());
+        } else if self.wrap_h {
+            res.push(self.cells[0][y].clone());
         }
 
         if y > 0 {
             res.push(self.cells[x][y - 1].clone());
+        } else if self.wrap_v {
+            res.push(self.cells[x][self.y - 1].clone());
         }
 
         if y < self.y - 1 {
             res.push(self.cells[x][y + 1].clone());
+        } else if self.wrap_v {
+            res.push(self.cells[x][0].clone());
         }
 
         res
@@ -135,20 +163,24 @@ where
     pub fn neighbors_linked_indices(&self, x: usize, y: usize) -> Vec<T> {
         let mut res = Vec::new();
 
-        if x > 0 && self.is_linked_indices(x, y, x - 1, y) {
-            res.push(self.cells[x - 1][y].clone());
+        let wrapped_x = x.checked_sub(1).unwrap_or(self.x - 1);
+        if self.is_linked_indices(x, y, wrapped_x, y) {
+            res.push(self.cells[wrapped_x][y].clone());
         }
 
-        if x < self.x - 1 && self.is_linked_indices(x, y, x + 1, y) {
-            res.push(self.cells[x + 1][y].clone());
+        let wrapped_x = (x + 1).rem_euclid(self.x);
+        if self.is_linked_indices(x, y, x + 1, y) {
+            res.push(self.cells[wrapped_x][y].clone());
         }
 
-        if y > 0 && self.is_linked_indices(x, y, x, y - 1) {
-            res.push(self.cells[x][y - 1].clone());
+        let wrapped_y = y.checked_sub(1).unwrap_or(self.y - 1);
+        if self.is_linked_indices(x, y, x, wrapped_y) {
+            res.push(self.cells[x][wrapped_y].clone());
         }
 
-        if y < self.y - 1 && self.is_linked_indices(x, y, x, y + 1) {
-            res.push(self.cells[x][y + 1].clone());
+        let wrapped_y = (y + 1).rem_euclid(self.y);
+        if self.is_linked_indices(x, y, x, wrapped_y) {
+            res.push(self.cells[x][wrapped_y].clone());
         }
 
         res
@@ -179,6 +211,7 @@ where
         wall_size: u32,
         color_cell: &[u8; 3],
         color_wall: &[u8; 3],
+        external_doors: bool,
         output_filename: &'static str,
     ) {
         output::png::format(
@@ -187,6 +220,7 @@ where
             wall_size,
             color_cell,
             color_wall,
+            external_doors,
             output_filename,
         )
     }
@@ -197,6 +231,7 @@ where
         wall_size: u32,
         color_cell: &[u8; 3],
         color_wall: &[u8; 3],
+        external_doors: bool,
         output_filename: &'static str,
     ) {
         output::svg::format(
@@ -205,8 +240,10 @@ where
             wall_size,
             color_cell,
             color_wall,
+            external_doors,
             output_filename,
         )
+        .expect("failed to write SVG");
     }
 
     pub fn unlink(&mut self, cell1: &T, cell2: &T) {
@@ -247,6 +284,14 @@ where
 
     pub fn y(&self) -> usize {
         self.y
+    }
+
+    pub fn start(&self) -> Xy {
+        self.start
+    }
+
+    pub fn end(&self) -> Xy {
+        self.end
     }
 }
 

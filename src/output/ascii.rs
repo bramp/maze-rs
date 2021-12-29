@@ -1,5 +1,3 @@
-use std::iter;
-
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
 
@@ -9,7 +7,7 @@ where
 {
     let mut res = String::new();
     res += "+";
-    res += &iter::repeat("---+").take(grid.x()).collect::<String>()[..];
+    res += &"---+".repeat(grid.x())[..];
     res += "\n";
 
     for y in 0..grid.y() {
@@ -37,5 +35,5 @@ where
         res += "\n";
     }
 
-    return res;
+    res
 }

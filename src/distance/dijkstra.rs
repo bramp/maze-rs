@@ -1,10 +1,12 @@
+use types::xy::Xy;
+
 use ansi_term::Colour::{Black, Green};
 use ansi_term::Style;
 
 use super::super::types::cell::Cell;
 use super::super::types::grid::Grid;
 
-const EMPTY_CELL: &'static str = "   ";
+const EMPTY_CELL: &str = "   ";
 
 static ASCII_LOWER: [char; 62] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
@@ -25,8 +27,8 @@ pub struct DistanceCell {
 impl Cell for DistanceCell {
     fn new(x: usize, y: usize) -> DistanceCell {
         DistanceCell {
-            x: x,
-            y: y,
+            x,
+            y,
             distance: None,
             is_path: false,
             // path: Vec::new()
@@ -66,11 +68,7 @@ impl DistanceCell {
     }
 }
 
-pub fn calculate<T>(
-    grid: &Grid<T>,
-    begin: (usize, usize),
-    end: (usize, usize),
-) -> Grid<DistanceCell>
+pub fn calculate<T>(grid: &Grid<T>, begin: Xy, end: Xy) -> Grid<DistanceCell>
 where
     T: Cell + Clone + Copy,
 {
@@ -79,10 +77,10 @@ where
     distance_grid.links = grid.links.clone();
 
     let mut frontier = Vec::new();
-    distance_grid[begin.0][begin.1].distance = Some(0);
-    frontier.push(distance_grid[begin.0][begin.1]);
+    distance_grid[begin.x][begin.y].distance = Some(0);
+    frontier.push(distance_grid[begin.x()][begin.y()]);
 
-    while frontier.len() > 0 {
+    while !frontier.is_empty() {
         // Crete new frontiers
         let mut new_frontier = Vec::new();
 
@@ -108,8 +106,8 @@ where
     // TODO: Store Path Incrementaly Here
     let _path: Vec<(usize, usize)> = Vec::new();
 
-    let mut current = Some(distance_grid[end.0][end.1]);
-    distance_grid[end.0][end.1].is_path = true;
+    let mut current = Some(distance_grid[end.x()][end.y()]);
+    distance_grid[end.x()][end.y()].is_path = true;
 
     while current.is_some() {
         let c = current.unwrap();
@@ -120,15 +118,14 @@ where
             }
         }
 
-        if new.is_some() {
-            let n = new.unwrap();
+        if let Some(n) = new {
             distance_grid[n.x()][n.y()].is_path = true;
         }
 
         current = new;
     }
 
-    return distance_grid;
+    distance_grid
 }
 
 #[cfg(test)]
@@ -143,7 +140,7 @@ mod tests {
         b.iter(|| {
             let mut grid: Grid<BaseCell> = Grid::new(10, 10);
             grid.generate_aldous_broder();
-            let _ = distance::dijkstra::calculate(&grid, (0, 0), (grid.x() - 1, grid.y() - 1));
+            let _ = distance::dijkstra::calculate(&grid, grid.start(), grid.end());
         });
     }
 
@@ -152,7 +149,7 @@ mod tests {
         b.iter(|| {
             let mut grid: Grid<BaseCell> = Grid::new(100, 100);
             grid.generate_aldous_broder();
-            let _ = distance::dijkstra::calculate(&grid, (0, 0), (grid.x() - 1, grid.y() - 1));
+            let _ = distance::dijkstra::calculate(&grid, grid.start(), grid.end());
         });
     }
 }
