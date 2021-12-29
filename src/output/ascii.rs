@@ -21,7 +21,8 @@ where
         let mut top = match grid.is_linked_indices(0, y, grid.x() - 1, y) {
             true => " ",
             false => "|",
-        }.to_string();
+        }
+        .to_string();
 
         let mut bottom = "+".to_string();
 

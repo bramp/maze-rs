@@ -23,13 +23,13 @@ fn draw_paths<T>(
 where
     T: Cell + Clone,
 {
-    let img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
-    let img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
+    let (img_x, img_y) = dimensions(grid, cell_size, wall_size);
 
     let mut img = GrayImage::new(img_x, img_y);
     let background_color = Luma([0]);
     let wall_color = Luma([1]);
 
+    // Draw the maze as a bitmap image
     draw_maze(
         &mut img,
         grid,
@@ -40,6 +40,7 @@ where
         external_doors,
     );
 
+    // Now use contour tracing to find the edges, to make a clean SVG.
     let mut bits = Vec::<Vec<i8>>::with_capacity(img.height() as usize);
     for row in img.rows() {
         bits.push(row.map(|p| (p == &wall_color) as i8).collect());
@@ -63,6 +64,8 @@ fn draw_rects<T>(
 where
     T: Cell + Clone,
 {
+    let (img_x, img_y) = dimensions(grid, cell_size, wall_size);
+
     // Draw Top Wall
     if external_doors && grid.start.y() == 0 {
         // Draw left of the starting door
@@ -92,7 +95,6 @@ where
             );
         }
     } else {
-        let img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
         document = document.add(
             Rectangle::new()
                 .set("x", 0)
@@ -104,7 +106,6 @@ where
     }
 
     // Left Wall
-    let img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
     document = document.add(
         Rectangle::new()
             .set("x", 0)
@@ -189,6 +190,24 @@ where
     document
 }
 
+fn dimensions<T>(grid: &Grid<T>, cell_size: u32, wall_size: u32) -> (u32, u32)
+where
+    T: Cell + Clone,
+{
+    let mut img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
+    let mut img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
+
+    // Shave the last wall_size off if we are wrapping
+    if grid.wrap_h {
+        img_x -= wall_size;
+    }
+    if grid.wrap_v {
+        img_y -= wall_size;
+    }
+
+    (img_x, img_y)
+}
+
 pub fn format<T>(
     grid: &Grid<T>,
     cell_size: u32,
@@ -201,8 +220,7 @@ pub fn format<T>(
 where
     T: Cell + Clone,
 {
-    let img_x = (grid.x() as u32 * cell_size) + (grid.x() as u32 + 1) * wall_size;
-    let img_y = (grid.y() as u32 * cell_size) + (grid.y() as u32 + 1) * wall_size;
+    let (img_x, img_y) = dimensions(grid, cell_size, wall_size);
 
     let style = format!(
         r#"
